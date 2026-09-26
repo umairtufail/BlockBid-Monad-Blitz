@@ -5,7 +5,9 @@
 3. **Why Monad (20s):** Rebidding every few seconds only works when fees are dust and finality is fast.
 4. **Close (10s):** GitHub + demo link. Attention auctions, onchain.
 
-### Links to fill in
-- Demo: 
-- Contract: 
-- Repo: 
+### Links
+- Repo: https://github.com/umairtufail/BlockBid-Monad-Blitz
+- Contract: https://testnet.monadvision.com/address/0xc8D488532E4cE1540F5Fc23E5e6bC52bb2EaA5CF
+- Local demo: http://localhost:3000
+- Submit: https://blitz.devnads.com
+- Public web: run `cd web && npx vercel --temporary` (or connect the GitHub repo in Vercel dashboard)
