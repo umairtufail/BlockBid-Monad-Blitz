@@ -1,19 +1,6 @@
 import type { Metadata } from "next";
-import { Cinzel, Manrope } from "next/font/google";
 import { Providers } from "@/components/Providers";
 import "./globals.css";
-
-const display = Cinzel({
-  subsets: ["latin"],
-  weight: ["500", "700"],
-  variable: "--font-display",
-});
-
-const body = Manrope({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-body",
-});
 
 export const metadata: Metadata = {
   title: "King of the Hill",
@@ -27,7 +14,19 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${display.variable} ${body.variable} antialiased`}>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Manrope:wght@400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body className="antialiased">
         <Providers>{children}</Providers>
       </body>
     </html>

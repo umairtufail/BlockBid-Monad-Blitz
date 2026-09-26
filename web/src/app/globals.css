@@ -10,6 +10,8 @@
   --ink: #161411;
   --danger: #c45c4a;
   --ok: #6a9a6a;
+  --font-display: "Cinzel", "Times New Roman", serif;
+  --font-body: "Manrope", "Segoe UI", sans-serif;
 }
 
 @theme inline {
@@ -17,7 +19,6 @@
   --color-foreground: var(--fg);
   --font-sans: var(--font-body);
 }
-
 body {
   margin: 0;
   min-height: 100vh;
