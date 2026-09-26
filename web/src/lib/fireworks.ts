@@ -1,7 +1,9 @@
+import { ATTACK_CATEGORIES, type AttackCategory } from "./categories";
+
 const FIREWORKS_URL = "https://api.fireworks.ai/inference/v1/chat/completions";
 const DEFAULT_MODEL =
   process.env.FIREWORKS_MODEL ||
-  "accounts/fireworks/models/llama-v3p1-8b-instruct";
+  "accounts/fireworks/models/glm-5p3-flash";
 
 export type ChatMessage = {
   role: "system" | "user" | "assistant";
@@ -27,7 +29,7 @@ export async function fireworksChat(
       model: opts?.model || DEFAULT_MODEL,
       messages,
       temperature: opts?.temperature ?? 0.4,
-      max_tokens: opts?.maxTokens ?? 600,
+      max_tokens: opts?.maxTokens ?? 800,
     }),
   });
 
@@ -37,17 +39,15 @@ export async function fireworksChat(
   }
 
   const data = (await res.json()) as {
-    choices?: { message?: { content?: string } }[];
+    choices?: {
+      message?: { content?: string; reasoning_content?: string };
+    }[];
   };
-  return data.choices?.[0]?.message?.content?.trim() || "";
+  const msg = data.choices?.[0]?.message;
+  const content = msg?.content?.trim() || "";
+  if (content) return content;
+  const reasoning = msg?.reasoning_content?.trim() || "";
+  return reasoning.slice(-400);
 }
 
-export const ATTACK_CATEGORIES = [
-  "Direct injection",
-  "Indirect injection",
-  "Tool manipulation",
-  "Secret extraction",
-  "Instruction conflict",
-] as const;
-
-export type AttackCategory = (typeof ATTACK_CATEGORIES)[number];
+export { ATTACK_CATEGORIES, type AttackCategory };

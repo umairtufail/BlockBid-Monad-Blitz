@@ -1,4 +1,4 @@
-import { ATTACK_CATEGORIES, type AttackCategory } from "./fireworks";
+import { ATTACK_CATEGORIES, type AttackCategory } from "./categories";
 
 export type DemoPreset = "defend" | "breach";
 
@@ -9,6 +9,8 @@ export type AttackPayload = {
   expectedExploit: string;
   viaTool: boolean;
 };
+
+export { ATTACK_CATEGORIES, type AttackCategory };
 
 export const DEMO_ATTACKS: Record<DemoPreset, AttackPayload> = {
   defend: {

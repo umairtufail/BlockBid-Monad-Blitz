@@ -11,7 +11,7 @@ const config = createConfig({
   connectors: [
     injected({
       shimDisconnect: true,
-      unstable_shimAsyncInject: 2_000,
+      unstable_shimAsyncInject: 5_000,
     }),
   ],
   transports: {
