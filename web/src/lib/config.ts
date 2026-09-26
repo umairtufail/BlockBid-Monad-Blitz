@@ -14,8 +14,11 @@ export const monadTestnet = defineChain({
 });
 
 export const CONTRACT_ADDRESS = (process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ||
-  "0xc8D488532E4cE1540F5Fc23E5e6bC52bb2EaA5CF") as `0x${string}`;
+  "0x90613177f3e09f0B8684a466ff71c9453571aA68") as `0x${string}`;
 
-export const ROUND_HINT_BLOCKS = Number(
-  process.env.NEXT_PUBLIC_ROUND_BLOCKS || "30"
-);
+export const BENCHMARK_ID = BigInt(process.env.NEXT_PUBLIC_BENCHMARK_ID || "1");
+
+export const MIN_STAKE_MON = "0.01";
+
+export const SYSTEM_SECRET =
+  process.env.SYSTEM_SECRET || "7F3A9C1E-PROOFBENCH-SECRET";

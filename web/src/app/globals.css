@@ -1,93 +1,51 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #0c0b0a;
-  --fg: #ebe6dc;
-  --muted: #8a8378;
-  --line: #2a2620;
-  --gold: #c9a227;
-  --gold-dim: #8a7018;
-  --ink: #161411;
-  --danger: #c45c4a;
-  --ok: #6a9a6a;
-  --font-display: "Cinzel", "Times New Roman", serif;
-  --font-body: "Manrope", "Segoe UI", sans-serif;
+  --bg: #0a0c0f;
+  --panel: #11151b;
+  --fg: #e8edf4;
+  --muted: #7d8899;
+  --line: #1e2630;
+  --accent: #3d9a7a;
+  --accent-dim: #2a6b55;
+  --danger: #d4655a;
+  --warn: #c9a227;
+  --font-display: "IBM Plex Sans", "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
 }
 
 @theme inline {
   --color-background: var(--bg);
   --color-foreground: var(--fg);
-  --font-sans: var(--font-body);
+  --font-sans: var(--font-display);
 }
+
 body {
   margin: 0;
   min-height: 100vh;
   color: var(--fg);
-  background-color: var(--bg);
-  background-image:
-    linear-gradient(180deg, #14110e 0%, var(--bg) 28%),
-    repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 47px,
-      rgba(201, 162, 39, 0.03) 48px
-    );
-  font-family: var(--font-body), "Segoe UI", sans-serif;
+  background:
+    radial-gradient(ellipse 80% 50% at 10% -10%, rgba(61, 154, 122, 0.12), transparent),
+    radial-gradient(ellipse 60% 40% at 100% 0%, rgba(30, 38, 48, 0.9), transparent),
+    var(--bg);
+  font-family: var(--font-display);
 }
 
-@keyframes rise {
+@keyframes feed-in {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
   }
 }
 
-@keyframes crown-in {
-  0% {
-    opacity: 0;
-    transform: translateY(-16px) scale(0.85);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+.anim-feed {
+  animation: feed-in 0.35s ease-out both;
 }
 
-@keyframes flash-out {
-  0% {
-    opacity: 1;
-    filter: brightness(1);
-  }
-  40% {
-    opacity: 0.55;
-    filter: brightness(1.4);
-  }
-  100% {
-    opacity: 1;
-    filter: brightness(1);
-  }
-}
-
-.anim-rise {
-  animation: rise 0.55s ease-out both;
-}
-
-.anim-crown {
-  animation: crown-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.anim-deposed {
-  animation: flash-out 0.7s ease-in-out both;
-}
-
-.font-display {
-  font-family: var(--font-display), Georgia, serif;
-}
-
-.font-body {
-  font-family: var(--font-body), system-ui, sans-serif;
+.font-mono {
+  font-family: var(--font-mono);
 }

@@ -22,3 +22,4 @@ web/.next/
 web/out/
 
 *.pdf
+.cursor/

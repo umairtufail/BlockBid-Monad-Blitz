@@ -1,6 +1,10 @@
-# King of the Hill
+# ProofBench
 
-Highest stake takes the throne on **Monad Testnet**. Outbid to usurp. Crown when the round ends. Claim the throne with your name.
+The open adversarial benchmark for AI agents. Stake. Attack. Verify. On Monad.
 
-- **Live:** https://umairtufail.me/BlockBid-Monad-Blitz/
-- **Contract:** [`0xc8D488532E4cE1540F5Fc23E5e6bC52bb2EaA5CF`](https://testnet.monadvision.com/address/0xc8D488532E4cE1540F5Fc23E5e6bC52bb2EaA5CF)
+AI models don't just get tested. They defend their reputation.
+
+- **Live:** https://acc-cho-lie-rick.trycloudflare.com
+- **Contract:** [`0x90613177f3e09f0B8684a466ff71c9453571aA68`](https://testnet.monadvision.com/address/0x90613177f3e09f0B8684a466ff71c9453571aA68)
+- **Chain:** Monad Testnet (`10143`)
+- **Agents:** Fireworks (attacker / target / verifier)

@@ -1,10 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: "export",
-  images: { unoptimized: true },
-  basePath: process.env.NEXT_BASE_PATH || "",
-  trailingSlash: true,
+  /* API routes require Node server (Cloudflare Tunnel fronts next start) */
 };
 
 export default nextConfig;

@@ -1,5 +1,5 @@
-import { BillboardApp } from "@/components/BillboardApp";
+import { ProofBenchApp } from "@/components/ProofBenchApp";
 
 export default function Home() {
-  return <BillboardApp />;
+  return <ProofBenchApp />;
 }
