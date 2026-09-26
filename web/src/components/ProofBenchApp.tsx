@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   useAccount,
   useConnect,
@@ -53,33 +53,60 @@ function shortAddr(a?: string) {
   return `${a.slice(0, 6)}…${a.slice(-4)}`;
 }
 
-function getEthereum() {
-  if (typeof window === "undefined") return undefined;
-  const eth = window.ethereum as
-    | {
-        isMetaMask?: boolean;
-        request?: (args: {
-          method: string;
-          params?: unknown[];
-        }) => Promise<unknown>;
-        providers?: {
-          isMetaMask?: boolean;
-          request?: (args: {
-            method: string;
-            params?: unknown[];
-          }) => Promise<unknown>;
-        }[];
-        on?: (event: string, handler: () => void) => void;
-        removeListener?: (event: string, handler: () => void) => void;
-      }
-    | undefined;
+type EthProvider = {
+  isMetaMask?: boolean;
+  request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
+  on?: (event: string, handler: (...args: unknown[]) => void) => void;
+  removeListener?: (event: string, handler: (...args: unknown[]) => void) => void;
+  providers?: EthProvider[];
+};
+
+function pickMetaMask(eth?: EthProvider | null): EthProvider | undefined {
   if (!eth) return undefined;
   if (Array.isArray(eth.providers) && eth.providers.length) {
-    return (
-      eth.providers.find((p) => p.isMetaMask) || eth.providers[0]
-    );
+    return eth.providers.find((p) => p.isMetaMask) || eth.providers[0];
   }
   return eth;
+}
+
+/** Resolve MetaMask via window.ethereum and EIP-6963. */
+async function resolveProvider(timeoutMs = 2500): Promise<EthProvider | undefined> {
+  if (typeof window === "undefined") return undefined;
+
+  const fromWindow = pickMetaMask(window.ethereum as EthProvider | undefined);
+  if (fromWindow?.request) return fromWindow;
+
+  // EIP-6963: announceProvider
+  const eip6963 = await new Promise<EthProvider | undefined>((resolve) => {
+    let done = false;
+    const finish = (p?: EthProvider) => {
+      if (done) return;
+      done = true;
+      window.removeEventListener("eip6963:announceProvider", onAnnounce as EventListener);
+      resolve(p);
+    };
+    const onAnnounce = (event: Event) => {
+      const detail = (event as CustomEvent).detail as
+        | { info?: { rdns?: string; name?: string }; provider?: EthProvider }
+        | undefined;
+      const rdns = detail?.info?.rdns || "";
+      const name = detail?.info?.name || "";
+      if (
+        detail?.provider?.request &&
+        (rdns.includes("metamask") || /metamask/i.test(name))
+      ) {
+        finish(detail.provider);
+      }
+    };
+    window.addEventListener("eip6963:announceProvider", onAnnounce as EventListener);
+    window.dispatchEvent(new Event("eip6963:requestProvider"));
+    window.setTimeout(() => {
+      const again = pickMetaMask(window.ethereum as EthProvider | undefined);
+      finish(again?.request ? again : undefined);
+    }, timeoutMs);
+  });
+
+  return eip6963;
 }
 
 const EXAMPLE =
@@ -95,6 +122,7 @@ export function ProofBenchApp() {
 
   const [hasInjected, setHasInjected] = useState(false);
   const [manualAddress, setManualAddress] = useState<string | undefined>();
+  const providerRef = useRef<EthProvider | null>(null);
   const [feed, setFeed] = useState<AttackRecord[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -113,20 +141,28 @@ export function ProofBenchApp() {
   const walletConnected = isConnected || Boolean(manualAddress);
 
   useEffect(() => {
-    const refresh = () => setHasInjected(Boolean(getEthereum()));
-    refresh();
-    const t = window.setInterval(refresh, 1000);
-    const eth = window.ethereum as
-      | { on?: (e: string, h: () => void) => void; removeListener?: (e: string, h: () => void) => void }
-      | undefined;
-    eth?.on?.("connect", refresh);
-    window.addEventListener("ethereum#initialized", refresh);
+    let cancelled = false;
+    const refresh = async () => {
+      const p = await resolveProvider(800);
+      if (cancelled) return;
+      if (p) {
+        providerRef.current = p;
+        setHasInjected(true);
+      }
+    };
+    void refresh();
+    const t = window.setInterval(() => void refresh(), 1500);
+    window.addEventListener("ethereum#initialized", () => void refresh());
+    window.addEventListener("eip6963:announceProvider", () => void refresh());
     return () => {
+      cancelled = true;
       window.clearInterval(t);
-      eth?.removeListener?.("connect", refresh);
-      window.removeEventListener("ethereum#initialized", refresh);
     };
   }, []);
+
+  function getEthereum(): EthProvider | undefined {
+    return providerRef.current || pickMetaMask(window.ethereum as EthProvider | undefined);
+  }
 
   const selected = useMemo(
     () => feed.find((a) => a.localId === selectedId) || null,
@@ -188,15 +224,14 @@ export function ProofBenchApp() {
     setBusy("connect");
     try {
       let ethereum = getEthereum();
-      for (let i = 0; i < 10 && !ethereum?.request; i++) {
-        await new Promise((r) => setTimeout(r, 300));
-        ethereum = getEthereum();
+      if (!ethereum?.request) {
+        ethereum = await resolveProvider(3000);
+        if (ethereum) providerRef.current = ethereum;
       }
       if (!ethereum?.request) {
         setError(
-          "MetaMask not found in this browser. Install the extension, then refresh this page."
+          "MetaMask is installed but not detected yet. Unlock MetaMask, refresh this page, then press Connect MetaMask again. Use the Install link only if you do not have it."
         );
-        window.open("https://metamask.io/download/", "_blank", "noopener,noreferrer");
         return;
       }
 
@@ -208,6 +243,7 @@ export function ProofBenchApp() {
       }
       setManualAddress(accounts[0]);
       setHasInjected(true);
+      providerRef.current = ethereum;
 
       const preferred =
         connectors.find((c) => c.id === "injected") ||
@@ -225,7 +261,7 @@ export function ProofBenchApp() {
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Connect failed";
       if (/reject|denied|cancel/i.test(msg)) {
-        setError("Connection rejected in MetaMask. Click Connect and approve.");
+        setError("Connection rejected in MetaMask. Click Connect MetaMask and approve.");
       } else {
         setError(msg);
       }
