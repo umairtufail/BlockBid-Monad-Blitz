@@ -185,53 +185,52 @@ export function ProofBenchApp() {
 
   async function connectWallet() {
     setError(null);
+    setBusy("connect");
     try {
-      // Wait briefly — MetaMask can inject after first paint on tunnel URLs
       let ethereum = getEthereum();
-      if (!ethereum) {
-        await new Promise((r) => setTimeout(r, 800));
+      for (let i = 0; i < 10 && !ethereum?.request; i++) {
+        await new Promise((r) => setTimeout(r, 300));
         ethereum = getEthereum();
       }
       if (!ethereum?.request) {
-        throw new Error(
-          "MetaMask not detected. Use Chrome/Brave/Firefox with the MetaMask extension on this HTTPS page."
+        setError(
+          "MetaMask not found in this browser. Install the extension, then refresh this page."
         );
+        window.open("https://metamask.io/download/", "_blank", "noopener,noreferrer");
+        return;
       }
 
-      // Unlock / permission popup first (more reliable than wagmi alone)
-      await ethereum.request({ method: "eth_requestAccounts" });
+      const accounts = (await ethereum.request({
+        method: "eth_requestAccounts",
+      })) as string[];
+      if (!accounts?.length) {
+        throw new Error("No account returned from MetaMask");
+      }
+      setManualAddress(accounts[0]);
+      setHasInjected(true);
 
       const preferred =
         connectors.find((c) => c.id === "injected") ||
         connectors.find((c) => c.type === "injected") ||
         connectors[0];
-      if (!preferred) {
-        throw new Error("No wallet connector available — refresh and try again");
+      if (preferred) {
+        try {
+          await connectAsync({ connector: preferred });
+        } catch {
+          // Manual address is enough for UI + viem txs
+        }
       }
 
-      try {
-        await connectAsync({ connector: preferred });
-      } catch (wagmiErr) {
-        const accounts = (await ethereum.request({
-          method: "eth_accounts",
-        })) as string[];
-        if (!accounts?.length) throw wagmiErr;
-        setManualAddress(accounts[0]);
-      }
-      const accounts = (await ethereum.request({
-        method: "eth_accounts",
-      })) as string[];
-      if (accounts?.[0]) setManualAddress(accounts[0]);
       await ensureNetwork();
-      setHasInjected(true);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Connect failed";
-      // User rejected
       if (/reject|denied|cancel/i.test(msg)) {
         setError("Connection rejected in MetaMask. Click Connect and approve.");
       } else {
         setError(msg);
       }
+    } finally {
+      setBusy(null);
     }
   }
 
@@ -498,18 +497,26 @@ export function ProofBenchApp() {
                 </button>
               </>
             ) : (
-              <button
-                type="button"
-                disabled={connecting}
-                onClick={connectWallet}
-                className="border border-[var(--accent)] bg-[var(--accent)] px-4 py-2 font-semibold text-[var(--bg)] disabled:opacity-40"
-              >
-                {connecting
-                  ? "Connecting…"
-                  : hasInjected
-                    ? "Connect MetaMask"
-                    : "Connect wallet"}
-              </button>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  disabled={busy === "connect" || connecting}
+                  onClick={connectWallet}
+                  className="border border-[var(--accent)] bg-[var(--accent)] px-4 py-2 font-semibold text-[var(--bg)] disabled:opacity-40"
+                >
+                  {busy === "connect" || connecting
+                    ? "Connecting…"
+                    : "Connect MetaMask"}
+                </button>
+                <a
+                  href="https://metamask.io/download/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="border border-[var(--line)] px-3 py-2 text-sm text-[var(--muted)] hover:border-[var(--muted)] hover:text-[var(--fg)]"
+                >
+                  Install MetaMask
+                </a>
+              </div>
             )}
           </div>
         </div>
@@ -789,14 +796,26 @@ export function ProofBenchApp() {
                   </p>
                   <div className="mt-4 flex flex-wrap gap-3">
                     {!walletConnected && (
-                      <button
-                        type="button"
-                        onClick={connectWallet}
-                        disabled={connecting}
-                        className="border border-[var(--accent)] bg-[var(--accent)] px-4 py-2.5 text-sm font-semibold text-[var(--bg)] disabled:opacity-40"
-                      >
-                        Connect wallet first
-                      </button>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={connectWallet}
+                          disabled={busy === "connect" || connecting}
+                          className="border border-[var(--accent)] bg-[var(--accent)] px-4 py-2.5 text-sm font-semibold text-[var(--bg)] disabled:opacity-40"
+                        >
+                          {busy === "connect" || connecting
+                            ? "Connecting…"
+                            : "Connect MetaMask"}
+                        </button>
+                        <a
+                          href="https://metamask.io/download/"
+                          target="_blank"
+                          rel="noreferrer"
+                          className="border border-[var(--line)] px-4 py-2.5 text-sm text-[var(--muted)] hover:text-[var(--fg)]"
+                        >
+                          Install MetaMask
+                        </a>
+                      </div>
                     )}
                     <button
                       type="button"
