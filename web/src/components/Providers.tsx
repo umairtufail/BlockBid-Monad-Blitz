@@ -8,17 +8,23 @@ import { useState, type ReactNode } from "react";
 
 const config = createConfig({
   chains: [monadTestnet],
-  connectors: [injected()],
+  connectors: [
+    injected({
+      shimDisconnect: true,
+      unstable_shimAsyncInject: 2_000,
+    }),
+  ],
   transports: {
-    [monadTestnet.id]: http(),
+    [monadTestnet.id]: http("https://testnet-rpc.monad.xyz"),
   },
+  multiInjectedProviderDiscovery: true,
   ssr: true,
 });
 
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
   return (
-    <WagmiProvider config={config}>
+    <WagmiProvider config={config} reconnectOnMount>
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     </WagmiProvider>
   );
