@@ -13,6 +13,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ attack: DEMO_ATTACKS[body.preset], source: "preset" });
     }
 
+    if (!process.env.FIREWORKS_API_KEY) {
+      const fallback = Math.random() > 0.5 ? DEMO_ATTACKS.defend : DEMO_ATTACKS.breach;
+      return NextResponse.json({
+        attack: { ...fallback, title: `${fallback.title} (offline gen)` },
+        source: "offline",
+      });
+    }
+
     const category =
       body.category && ATTACK_CATEGORIES.includes(body.category as (typeof ATTACK_CATEGORIES)[number])
         ? body.category
